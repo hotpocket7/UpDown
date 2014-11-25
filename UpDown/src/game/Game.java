@@ -19,72 +19,98 @@ public class Game extends Canvas implements Runnable {
 
 	private static final long serialVersionUID = -622927646585048709L;
 
-	static float score = 0;
+	private enum GameState {
+		MENU, ALIVE, DEAD
+	}
+	
+	private float score;
 	long startTime;
 	long currentTime;
-	public static int frames = 0;
-	public static String title = String.format("Game | FPS: %d | Time survived: %f", frames, score);
+	
+	public static String title    = "";
 	public static final int WIDTH = 768, HEIGHT = WIDTH / 16 * 9;
-	JFrame frame = new JFrame();
+	JFrame frame                  = new JFrame();
 	
-	private boolean isRunning = false;
+	private boolean isRunning;
 	private Thread thread;
-	public static int updates = 0;
+	private int updates;
+	private int frames;
 	
-	private BufferedImage img = new BufferedImage(WIDTH, HEIGHT, BufferedImage.TYPE_INT_RGB);
-	private int[] pixels = ((DataBufferInt) img.getRaster().getDataBuffer()).getData();
+	private BufferedImage img;
+	private int[] pixels;
 	private Screen screen;
 	
 	private Controller controller;
 	public static Player player;
 	
-	public static Random random = new Random();
+	public static Random random;
 	
-	public static int gameState;
+	private GameState gameState;
 	
 	public Game(){
 		Dimension size = new Dimension(WIDTH, HEIGHT);
 		setPreferredSize(size);
-		gameState = 0;
-		screen = new Screen(WIDTH, HEIGHT);
-		player = new Player(WIDTH/2-16, HEIGHT/2-16, 16, 16);
+		gameState = GameState.DEAD;
+		
+		isRunning = false;
+		updates   = 0;
+		frames    = 0;
+		score     = 0;
+		
+		screen     = new Screen(WIDTH, HEIGHT);
+		player     = new Player(WIDTH/2-16, HEIGHT/2-16, 16, 16);
 		controller = new Controller();
+		
+		img    = new BufferedImage(WIDTH, HEIGHT, BufferedImage.TYPE_INT_RGB);
+		pixels = ((DataBufferInt) img.getRaster().getDataBuffer()).getData();
+		
+		random = new Random();
+		
 		addKeyListener(controller);
 	}
+	
+	
 	
 	public void update(){
 		title = String.format("Game | FPS: %d | Time survived: %.3f seconds", frames, score);
 		frame.setTitle(title);
 		controller.update();
 		if(controller.restartDown) restart();
-		if(gameState == 0){
+		
+		if(gameState == GameState.DEAD){
 			if(controller.startDown){
 				score = 0;
 				startTime = System.currentTimeMillis();
-				gameState = 1;
+				gameState = GameState.ALIVE;
 			}
 		}
-		if(gameState == 1){
+		
+		if(gameState == GameState.ALIVE){
 			currentTime = System.currentTimeMillis();
 			score = (currentTime - startTime) / 1000f;
-			if(controller.leftDown) player.xVel = -player.speed;
-			else if(controller.rightDown) player.xVel = player.speed;
-			else player.xVel = 0;
+			
+			if(controller.leftDown) 
+				player.xVel = -player.speed;
+			else if(controller.rightDown) 
+				player.xVel = player.speed;
+			else 
+				player.xVel = 0;
 			
 			if(updates % 30 == 0){
-				int side = random.nextInt(2);
-				int size = random.nextInt(16) + 16;
-				int speed = random.nextInt(3) + 3;
-				int movementType = random.nextInt(2);
+				int side = random.nextInt(2); // 0 is left side; 1 is right side
+				int size = random.nextInt(17) + 16; // 16-32
+				int speed = random.nextInt(4) + 3; // 3 - 6
+				// TODO: Generalize probability system for future movement types, items, and events
+				Enemy.MovementType movementType = random.nextInt(10) > 2 ? Enemy.MovementType.STRAIGHT : Enemy.MovementType.SINE;
 				int yPos;
 				switch(movementType){
-					case 1:
+					case SINE:
 						yPos = 0;
 						break;
 					default:
 						yPos = random.nextInt(HEIGHT-size);
 				}
-				Enemy.enemies.add(new Enemy(side == 0 ? -size : WIDTH, yPos, size, size, (speed - 2 * speed * side), random.nextInt(10) > 2 ? 0 : 1));
+				Enemy.enemies.add(new Enemy(side == 0 ? -size : WIDTH,yPos, size, size, (speed - 2 * speed * side), movementType));
 			}
 			
 			player.update();
@@ -119,7 +145,7 @@ public class Game extends Canvas implements Runnable {
 	}
 	
 	public synchronized void restart(){
-		gameState = 0;
+		gameState = GameState.DEAD;
 		for(Enemy e : Enemy.enemies){
 			Enemy.enemies.remove(e);
 		}
@@ -176,7 +202,7 @@ public class Game extends Canvas implements Runnable {
 		game.frame.setResizable(false);
 		game.frame.pack();
 		game.frame.setVisible(true);
-		game.frame.setDefaultCloseOperation(game.frame.EXIT_ON_CLOSE);
+		game.frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		game.frame.setLocationRelativeTo(null);
 		
 		game.start();
