@@ -30,10 +30,8 @@ public class Enemy extends Entity {
 				amplitude = Game.random.nextInt(Game.HEIGHT/2 - height - (Game.HEIGHT/8 - height)) + Game.HEIGHT/8 - height;
 				yInitial = Game.random.nextInt( Game.HEIGHT - 2 * amplitude - height ) + amplitude; // Make sure the enemy is positioned such that it doesn't move off the screen vertically
 				period = Game.random.nextInt(500) + 1000;
-				color = Color.ORANGE;
-				break;
 			default:
-				color = Color.RED;
+				color = new Color(0xAA0000);
 		}
 	}
 	

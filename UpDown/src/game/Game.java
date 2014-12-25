@@ -6,6 +6,7 @@ import game.entity.Player;
 import game.graphics.Screen;
 
 import java.awt.Canvas;
+import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Graphics;
 import java.awt.image.BufferStrategy;
@@ -19,7 +20,7 @@ public class Game extends Canvas implements Runnable {
 
 	private static final long serialVersionUID = -622927646585048709L;
 
-	private enum GameState {
+	public static enum GameState {
 		MENU, ALIVE, DEAD
 	}
 	
@@ -45,7 +46,7 @@ public class Game extends Canvas implements Runnable {
 	
 	public static Random random;
 	
-	private GameState gameState;
+	private static GameState gameState;
 	
 	public Game(){
 		Dimension size = new Dimension(WIDTH, HEIGHT);
@@ -69,14 +70,15 @@ public class Game extends Canvas implements Runnable {
 		addKeyListener(controller);
 	}
 	
-	
+	public static void setGameState(GameState gs){
+		gameState = gs;
+	}
 	
 	public void update(){
 		title = String.format("Game | FPS: %d | Time survived: %.3f seconds", frames, score);
 		frame.setTitle(title);
 		controller.update();
 		if(controller.restartDown) restart();
-		
 		if(gameState == GameState.DEAD){
 			if(controller.startDown){
 				score = 0;
@@ -116,7 +118,12 @@ public class Game extends Canvas implements Runnable {
 			player.update();
 			for(Enemy e : Enemy.enemies) {
 				e.update();
-				if(player.bounds.intersects(e.bounds)) restart();
+				if(player.bounds.intersects(e.bounds) && !player.isInvincible){
+					if(player.health == 0)
+						player.die();
+					else
+						player.takeDamage(1);
+				}
 			}
 		}
 	}
@@ -136,15 +143,15 @@ public class Game extends Canvas implements Runnable {
 			pixels[i] = screen.pixels[i];
 		}
 		
-		//g.setColor(Color.BLACK);
-		//g.fillRect(0, 0, WIDTH, HEIGHT);
+		g.setColor(Color.WHITE);
+		g.fillRect(0, 0, WIDTH, HEIGHT);
 		g.drawImage(img, 0, 0, WIDTH, HEIGHT, null);
 		
 		g.dispose();
 		bs.show();
 	}
 	
-	public synchronized void restart(){
+	public static synchronized void restart(){
 		gameState = GameState.DEAD;
 		for(Enemy e : Enemy.enemies){
 			Enemy.enemies.remove(e);
