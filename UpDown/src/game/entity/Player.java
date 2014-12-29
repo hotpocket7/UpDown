@@ -11,8 +11,9 @@ public class Player extends Entity {
 		ALIVE, DYING
 	}
 	
-	public int speed            = 6;
-	public int health           = 2;
+	public int xVelocity         = 6;
+	public int yVelocity		 = 10;
+	public int health            = 2;
 	public int invincibilityTime = 0;
 	public Color color;
 	
@@ -23,7 +24,7 @@ public class Player extends Entity {
 	public Player(int x, int y, int width, int height){
 		super(x, y, width, height);
 		xVel = 0;
-		yVel = 10;
+		yVel = yVelocity;
 		state = State.ALIVE;
 		bounds = new Rectangle(x, y, width, height);
 		color = Color.BLACK;
